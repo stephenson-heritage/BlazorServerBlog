@@ -7,9 +7,6 @@
 @using Data.Models
 @inject IDbContextFactory<ApplicationDbContext> ContextFactory
 @inject AuthenticationStateProvider authState
-
-
-
 <h1>Blog</h1>
 
 @if (User.IsAuthenticated)
@@ -25,31 +22,13 @@
         <button @onclick="AddEntry">Add</button>
     </div>
 }
-
 <hr />
-
 <div class="blog">
+    @foreach (BlogEntry entry in blogEntries)
+    {
 
-
-@{
-    List<string> myInputs = new List<string>();
-}
-@for (int i = 0; i < blogEntries.Count; i++)
-{
-    int j = i;
-    myInputs.Add("");
-    <div class="blog-entry">
-        <h3>@blogEntries[j].Title</h3>
-
-
-        <input id="@blogEntries[j].BlogEntryId" @bind-value="@myInputs[i]" />
-        <button @onclick="() => AddComment(i, blogEntries[i])">Comment</button>
-    </div>
-}
-
+    }
 </div>
-
-
 
 @code {
     private List<BlogEntry> blogEntries = new List<BlogEntry>();
@@ -63,7 +42,7 @@
     {
         using var db = ContextFactory.CreateDbContext();
 
-        blogEntries.AddRange(await db.Entries.Include(u => u.User).ToListAsync());
+        blogEntries.AddRange(await db.Entries.Include(u => u.User).Include(c => c.Comments).ToListAsync());
 
 
 
