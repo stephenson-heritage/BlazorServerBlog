@@ -5,8 +5,10 @@
 
 @using Data
 @using Data.Models
+@using Services
 @inject IDbContextFactory<ApplicationDbContext> ContextFactory
 @inject AuthenticationStateProvider authState
+@inject IMailService mailer
 <h1>Blog</h1>
 
 @if (User.IsAuthenticated)
@@ -60,6 +62,9 @@
 
             db.Entries.Add(entry);
             await db.SaveChangesAsync();
+            blogEntries.Add(entry);
+            await mailer.SendEmail(iuser.NormalizedEmail, "Saved a blog entry", $"A blog entry was added to the app:<p>{entry.Content}</p>");
+
         }
     }
 

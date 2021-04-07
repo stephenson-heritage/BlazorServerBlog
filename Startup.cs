@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using BlazorServerBlog.Areas.Identity;
 using BlazorServerBlog.Data;
+using BlazorServerBlog.Services;
 
 namespace BlazorServerBlog
 {
@@ -47,6 +48,8 @@ namespace BlazorServerBlog
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
             services.AddDatabaseDeveloperPageExceptionFilter();
             services.AddSingleton<WeatherForecastService>();
+            services.AddTransient<IMailService, Mail>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
