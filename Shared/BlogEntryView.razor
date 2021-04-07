@@ -1,0 +1,90 @@
+@using Data.Models
+@using Data
+
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+
+@inject IDbContextFactory<ApplicationDbContext> ContextFactory
+@inject AuthenticationStateProvider authState
+
+<div class="blog-entry">
+    <h3>@Entry.Title</h3>
+
+    <div class="blog-datetime">
+        <span class="blog-date">@Entry.Time.ToLongDateString()</span> -
+        <span class="blog-time">@Entry.Time.ToShortTimeString()</span>
+    </div>
+    <div class="blog-user">
+        @Entry.User.UserName
+    </div>
+    <p class="blog-content">
+        @((MarkupString)Entry.Content)
+    </p>
+</div>
+<div class="blog-comments">
+    @foreach (BlogComment comment in Entry.Comments)
+    {
+        <div class="blog-comment">
+            <div class="blog-comment-user">@comment.User.UserName</div>
+            <p>@comment.Content</p>
+        </div>
+    }
+</div>
+@if (User.IsAuthenticated)
+{
+    <input @bind="Comment" />
+    <button @onclick="AddComment">Comment</button>
+}
+
+@code {
+    [Parameter]
+    public BlogEntry Entry { get; set; }
+
+    public string Comment { get; set; }
+
+
+    private System.Security.Principal.IIdentity User;
+    protected override async Task OnInitializedAsync()
+    {
+        var astate = await authState.GetAuthenticationStateAsync();
+        User = astate.User.Identity;
+
+
+        using var db = ContextFactory.CreateDbContext();
+        Entry.Comments = await db.Comments
+            .Where(c => c.BlogEntry.BlogEntryId == Entry.BlogEntryId)
+            .Include(c => c.User)
+            .ToListAsync();
+
+
+    }
+
+    public async Task AddComment()
+    {
+        if (!string.IsNullOrWhiteSpace(Comment) && User.IsAuthenticated)
+        {
+
+            using var db = ContextFactory.CreateDbContext();
+
+            var user = await db.Profiles
+                .Where(u => u.UserName == User.Name)
+                .FirstOrDefaultAsync<IdentityUser>();
+
+            var entry = await db.Entries
+                .Where(be => be.BlogEntryId == Entry.BlogEntryId)
+                .Include(be => be.Comments)
+                .FirstOrDefaultAsync<BlogEntry>();
+
+            var comment = new BlogComment { Content = Comment, Time = DateTime.Now, BlogEntry = entry, User = user };
+
+            entry.Comments.Add(comment);
+            await db.SaveChangesAsync();
+
+            Comment = "";
+
+
+
+        }
+    }
+
+}

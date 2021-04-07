@@ -26,7 +26,7 @@
 <div class="blog">
     @foreach (BlogEntry entry in blogEntries)
     {
-
+        <BlogEntryView Entry="@entry" />
     }
 </div>
 
@@ -44,8 +44,6 @@
 
         blogEntries.AddRange(await db.Entries.Include(u => u.User).Include(c => c.Comments).ToListAsync());
 
-
-
         var astate = await authState.GetAuthenticationStateAsync();
         User = astate.User.Identity;
     }
@@ -61,25 +59,6 @@
             var entry = new BlogEntry { Title = title, Content = content, Time = DateTime.Now, User = iuser };
 
             db.Entries.Add(entry);
-            await db.SaveChangesAsync();
-        }
-    }
-
-    private async Task AddComment(int commentNum, BlogEntry be)
-    {
-        string commentText = CommentStrings[commentNum];
-        if (!string.IsNullOrWhiteSpace(commentText) && User.IsAuthenticated)
-        {
-            using var db = ContextFactory.CreateDbContext();
-
-            var iuser = await db.Profiles.Where(u => u.UserName == User.Name).FirstOrDefaultAsync<IdentityUser>();
-
-            var blogEntry = await db.Entries.Where(b => b.BlogEntryId ==
-                be.BlogEntryId).Include(c => c.Comments).FirstOrDefaultAsync<BlogEntry>();
-            var comment = new BlogComment { Content = commentText, Time = DateTime.Now, User = iuser, BlogEntry = blogEntry };
-
-
-            blogEntry.Comments.Add(comment);
             await db.SaveChangesAsync();
         }
     }
