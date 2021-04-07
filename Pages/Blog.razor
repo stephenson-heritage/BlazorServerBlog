@@ -1,0 +1,108 @@
+@page "/blog"
+
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+
+@using Data
+@using Data.Models
+@inject IDbContextFactory<ApplicationDbContext> ContextFactory
+@inject AuthenticationStateProvider authState
+
+
+
+<h1>Blog</h1>
+
+@if (User.IsAuthenticated)
+{
+    <h2>Add Entry</h2>
+    <div>
+        <input placeholder="Title" @bind="title" />
+    </div>
+    <div>
+        <textarea placeholder="Post" @bind="content"></textarea>
+    </div>
+    <div>
+        <button @onclick="AddEntry">Add</button>
+    </div>
+}
+
+<hr />
+
+<div class="blog">
+
+
+@{
+    List<string> myInputs = new List<string>();
+}
+@for (int i = 0; i < blogEntries.Count; i++)
+{
+    int j = i;
+    myInputs.Add("");
+    <div class="blog-entry">
+        <h3>@blogEntries[j].Title</h3>
+
+
+        <input id="@blogEntries[j].BlogEntryId" @bind-value="@myInputs[i]" />
+        <button @onclick="() => AddComment(i, blogEntries[i])">Comment</button>
+    </div>
+}
+
+</div>
+
+
+
+@code {
+    private List<BlogEntry> blogEntries = new List<BlogEntry>();
+    private List<string> CommentStrings = new List<string>();
+
+    private string title, content;
+
+    private System.Security.Principal.IIdentity User;
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var db = ContextFactory.CreateDbContext();
+
+        blogEntries.AddRange(await db.Entries.Include(u => u.User).ToListAsync());
+
+
+
+        var astate = await authState.GetAuthenticationStateAsync();
+        User = astate.User.Identity;
+    }
+
+    private async Task AddEntry()
+    {
+        if (!string.IsNullOrWhiteSpace(title) && !string.IsNullOrWhiteSpace(content) && User.IsAuthenticated)
+        {
+            using var db = ContextFactory.CreateDbContext();
+
+            var iuser = await db.Profiles.Where(u => u.UserName == User.Name).FirstOrDefaultAsync<IdentityUser>();
+
+            var entry = new BlogEntry { Title = title, Content = content, Time = DateTime.Now, User = iuser };
+
+            db.Entries.Add(entry);
+            await db.SaveChangesAsync();
+        }
+    }
+
+    private async Task AddComment(int commentNum, BlogEntry be)
+    {
+        string commentText = CommentStrings[commentNum];
+        if (!string.IsNullOrWhiteSpace(commentText) && User.IsAuthenticated)
+        {
+            using var db = ContextFactory.CreateDbContext();
+
+            var iuser = await db.Profiles.Where(u => u.UserName == User.Name).FirstOrDefaultAsync<IdentityUser>();
+
+            var blogEntry = await db.Entries.Where(b => b.BlogEntryId ==
+                be.BlogEntryId).Include(c => c.Comments).FirstOrDefaultAsync<BlogEntry>();
+            var comment = new BlogComment { Content = commentText, Time = DateTime.Now, User = iuser, BlogEntry = blogEntry };
+
+
+            blogEntry.Comments.Add(comment);
+            await db.SaveChangesAsync();
+        }
+    }
+
+}
