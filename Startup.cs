@@ -16,6 +16,9 @@ using Microsoft.Extensions.Hosting;
 using BlazorServerBlog.Areas.Identity;
 using BlazorServerBlog.Data;
 using BlazorServerBlog.Services;
+using Microsoft.AspNetCore.Identity.UI.Services;
+
+
 
 namespace BlazorServerBlog
 {
@@ -38,18 +41,16 @@ namespace BlazorServerBlog
                 ServiceLifetime.Singleton
             );
 
-            services.AddDbContextFactory<ApplicationDbContext>(options =>
-                  options.UseSqlite(
-                      Configuration.GetConnectionString("DefaultConnection")));
+            
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
             services.AddDatabaseDeveloperPageExceptionFilter();
-            services.AddSingleton<WeatherForecastService>();
+           
             services.AddTransient<IMailService, Mail>();
-
+            services.AddTransient<IEmailSender, Mail>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

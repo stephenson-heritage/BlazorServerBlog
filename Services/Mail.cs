@@ -1,12 +1,13 @@
 
 using System.Threading.Tasks;
 using MailKit.Net.Smtp;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Configuration;
 using MimeKit;
 
 namespace BlazorServerBlog.Services
 {
-    public class Mail : IMailService
+    public class Mail : IMailService, IEmailSender
     {
         public IConfiguration Configuration { get; }
         public Mail(IConfiguration configuration)
@@ -40,6 +41,11 @@ namespace BlazorServerBlog.Services
                 new MailboxAddress(Configuration["Email:Name"], Configuration["Email:Address"]),
                 MailboxAddress.Parse(to), subject, bb
             );
+        }
+
+        public async Task SendEmailAsync(string email, string subject, string htmlMessage)
+        {
+            await SendEmail(email, subject, htmlMessage);
         }
     }
 }
