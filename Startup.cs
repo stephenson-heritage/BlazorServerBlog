@@ -18,8 +18,6 @@ using BlazorServerBlog.Data;
 using BlazorServerBlog.Services;
 using Microsoft.AspNetCore.Identity.UI.Services;
 
-
-
 namespace BlazorServerBlog
 {
     public class Startup
@@ -50,7 +48,6 @@ namespace BlazorServerBlog
             services.AddServerSideBlazor();
             services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
             services.AddDatabaseDeveloperPageExceptionFilter();
-            services.AddSingleton<WeatherForecastService>();
             services.AddTransient<IMailService, Mail>();
             services.AddTransient<IEmailSender, Mail>();
         }

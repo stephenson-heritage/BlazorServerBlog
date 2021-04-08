@@ -9,6 +9,8 @@
 @inject IDbContextFactory<ApplicationDbContext> ContextFactory
 @inject AuthenticationStateProvider authState
 @inject IMailService mailer
+
+
 <h1>Blog</h1>
 
 @if (User.IsAuthenticated)
@@ -44,7 +46,11 @@
     {
         using var db = ContextFactory.CreateDbContext();
 
-        blogEntries.AddRange(await db.Entries.Include(u => u.User).Include(c => c.Comments).ToListAsync());
+        blogEntries.AddRange(await db.Entries
+            .Include(u => u.User)
+            .Include(c => c.Comments)
+            .OrderByDescending(b => b.Time)
+            .ToListAsync());
 
         var astate = await authState.GetAuthenticationStateAsync();
         User = astate.User.Identity;
@@ -62,8 +68,30 @@
 
             db.Entries.Add(entry);
             await db.SaveChangesAsync();
-            blogEntries.Add(entry);
-            await mailer.SendEmail(iuser.NormalizedEmail, "Saved a blog entry", $"A blog entry was added to the app:<p>{entry.Content}</p>");
+
+            title = "";
+            content = "";
+
+
+            blogEntries.Clear();
+            blogEntries.AddRange(await db.Entries
+                .Include(u => u.User)
+                .Include(c => c.Comments)
+                .OrderByDescending(b => b.Time)
+                .ToListAsync());
+
+            //entry.Comments = new List<BlogComment>();
+            /* blogEntries.Add(entry);
+
+            blogEntries.Sort(); */
+
+
+
+            await mailer.SendEmail(
+                iuser.NormalizedEmail,
+                $"Added Blog Entry {title}",
+                $"You added a blog entry: <h2>{title}</h2><p>{content}</p>"
+                );
 
         }
     }

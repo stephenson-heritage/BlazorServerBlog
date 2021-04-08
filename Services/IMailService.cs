@@ -1,3 +1,4 @@
+
 using System.Threading.Tasks;
 
 namespace BlazorServerBlog.Services
@@ -7,4 +8,5 @@ namespace BlazorServerBlog.Services
     {
         Task SendEmail(string to, string subject, string body);
     }
+
 }

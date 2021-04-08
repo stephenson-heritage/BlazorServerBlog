@@ -1,46 +1,49 @@
-
+using MailKit;
 using System.Threading.Tasks;
-using MailKit.Net.Smtp;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Configuration;
 using MimeKit;
+using MailKit.Net.Smtp;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace BlazorServerBlog.Services
 {
     public class Mail : IMailService, IEmailSender
     {
-        public IConfiguration Configuration { get; }
+
+        public IConfiguration _config { get; }
+
         public Mail(IConfiguration configuration)
         {
-            Configuration = configuration;
+            _config = configuration;
         }
 
         public async Task SendEmail(MailboxAddress from, MailboxAddress to, string subject, BodyBuilder body)
         {
 
             var msg = new MimeMessage();
+
             msg.From.Add(from);
             msg.To.Add(to);
             msg.Subject = subject;
             msg.Body = body.ToMessageBody();
-            using (var client = new SmtpClient())
-            {
-                client.Connect("smtp.mailtrap.io", 587, false);
-                client.Authenticate("ef209c6b7451b7", "12c83a67c2a77c");
-                await client.SendAsync(msg);
-                client.Disconnect(true);
-            }
 
+            using var client = new SmtpClient();
+
+            client.Connect(_config["Email:server"], 587, false);
+            client.Authenticate(_config["Email:user"], _config["Email:password"]);
+            await client.SendAsync(msg);
+            client.Disconnect(true);
         }
+
 
         public async Task SendEmail(string to, string subject, string body)
         {
-            var bb = new BodyBuilder();
-            bb.HtmlBody = body;
-            await SendEmail(
-                new MailboxAddress(Configuration["Email:Name"], Configuration["Email:Address"]),
-                MailboxAddress.Parse(to), subject, bb
-            );
+            var bb = new BodyBuilder { HtmlBody = body };
+            var toAddr = MailboxAddress.Parse(to);
+            var fromAddr = new MailboxAddress(_config["Email:name"], _config["Email:address"]);
+
+            await SendEmail(fromAddr, toAddr, subject, bb);
+
         }
 
         public async Task SendEmailAsync(string email, string subject, string htmlMessage)

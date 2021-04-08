@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace BlazorServerBlog.Data.Models
 {
-    public class BlogEntry
+    public class BlogEntry : IComparable<BlogEntry>
     {
         public uint BlogEntryId { get; set; }
 
@@ -21,6 +21,19 @@ namespace BlazorServerBlog.Data.Models
         public virtual IdentityUser User { get; set; }
         public virtual ICollection<BlogComment> Comments { get; set; }
 
+        public int CompareTo(BlogEntry other)
+        {
+            if (this.Time > other.Time)
+            {
+                return -1;
+            }
+            else if (this.Time < other.Time)
+            {
+                return 1;
+            }
+
+            return 0;
+        }
     }
 
 }

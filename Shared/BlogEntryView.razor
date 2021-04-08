@@ -21,15 +21,18 @@
         @((MarkupString)Entry.Content)
     </p>
 </div>
-<div class="blog-comments">
-    @foreach (BlogComment comment in Entry.Comments)
-    {
-        <div class="blog-comment">
-            <div class="blog-comment-user">@comment.User.UserName</div>
-            <p>@comment.Content</p>
-        </div>
-    }
-</div>
+@if (Entry.Comments != null)
+{
+    <div class="blog-comments">
+        @foreach (BlogComment comment in Entry.Comments)
+        {
+            <div class="blog-comment">
+                <div class="blog-comment-user">@comment.User.UserName</div>
+                <p>@comment.Content</p>
+            </div>
+        }
+    </div>
+}
 @if (User.IsAuthenticated)
 {
     <input @bind="Comment" />
@@ -80,10 +83,15 @@
             entry.Comments.Add(comment);
             await db.SaveChangesAsync();
 
+            //Entry.Comments.Add(comment);
+            Entry.Comments.Clear();
+
+            Entry.Comments = await db.Comments
+                .Where(c => c.BlogEntry.BlogEntryId == Entry.BlogEntryId)
+                .Include(c => c.User)
+                .ToListAsync();
+
             Comment = "";
-
-
-
         }
     }
 
